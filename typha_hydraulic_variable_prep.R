@@ -11,7 +11,6 @@ set.seed(85436)
 dpth <- rnorm(n=67, mean = 54.3, sd = 9.3)
 hist(dpth)
 
-
 pres <- ifelse(dpth >= 70 | dpth <= 40 , 0, 1)
 
 dat <- data.frame(
@@ -27,8 +26,51 @@ str(dat)
 dat$season <- as.character(dat$season)
 dat$location <- as.character(dat$location)
 dat$species <- as.character(dat$species)
-dat$year <- as.numeric(dat$year)
+dat$year <- as.character(dat$year)
 dat$source <- as.character(dat$source)
+
+
+#charles jones thesis
+#generate data from typha occurrence based on fig 3-4 and max vel reported on page 38
+set.seed(85436)
+dat1 <- rnorm(n=20, mean = 30, sd = 8)
+hist(dat1)
+pres <- ifelse(dat1 >= 111 | dat1 <= 0 , 0, 1)
+
+dat1 <- data.frame(
+  "depth_cm" = dat1,
+  "occurrence" = pres,
+  "season" = "summer",
+  "location" = "Arizona",
+  "species" = "Typha domingensis",
+  "year" = "2002",
+  "source" = "Jones, Charles E. 2003. Predicting Cattail responses to re-watering of a travertine stream: Decommissioning the Fossil Springs Dam. Masters Thesis. Northern Arizona University"
+)
+
+#make data for paired patches with no typha based on fig 3-4 and page 45 range
+set.seed(854776)
+dat2 <- rnorm(n=20, mean = 20, sd = 4)
+hist(dat2)
+pres <- 0
+
+dat2 <- data.frame(
+  "depth_cm" = dat2,
+  "occurrence" = pres,
+  "season" = "summer",
+  "location" = "Arizona",
+  "species" = "Typha domingensis",
+  "year" = "2002",
+  "source" = "Jones, Charles E. 2003. Predicting Cattail responses to re-watering of a travertine stream: Decommissioning the Fossil Springs Dam. Masters Thesis. Northern Arizona University"
+)
+
+dat1 <- rbind(dat1, dat2)
+dat1$season <- as.character(dat1$season)
+dat1$location <- as.character(dat1$location)
+dat1$species <- as.character(dat1$species)
+dat1$year <- as.character(dat1$year)
+dat1$source <- as.character(dat1$source)
+
+
 
 #note, if there is a start and an end month, we will use the end month
 
@@ -73,7 +115,7 @@ rm(dpth1a, dpth1b, dpth1c)
 str(dpth1)
 
 dpth1$location <- as.character(dpth1$location)
-dpth1$year <- as.numeric(dpth1$year)
+dpth1$year <- as.character(dpth1$year)
 dpth1$species <- as.character(dpth1$species)
 dpth1$germination_perc <- as.numeric(dpth1$germination_perc)
 dpth1$seedling_survial_perc <- as.numeric(dpth1$seedling_survial_perc)
@@ -90,17 +132,18 @@ dpth2 <- dpth2 %>%
          density_ramet_per_m2_sd = density_ramet.m2.sd,
          source = X.1,
          season = month) %>% 
-  filter(season == "september")
-dpth2$season <- "summer"
+  filter(season == "september") %>% 
+  mutate(season = "summer",
+         occurrence = ifelse(density_ramet_per_m2 > 0 , 1, 0),
+         source = "J_Grace, J. B., & Wetzel, R. G. (1981). Habitat Partitioning and Competitive Displacement in Cattails (Typha). Experimental Field Studies. American Naturalist, 118(4), 463.474."
+      )
 
-dpth2$source <- "J_Grace, J. B., & Wetzel, R. G. (1981). Habitat Partitioning and Competitive Displacement in Cattails (Typha). Experimental Field Studies. American Naturalist, 118(4), 463.474."
 dpth2$density_ramet_per_m2 <- as.numeric(dpth2$density_ramet_per_m2)
 dpth2$depth_cm <- as.numeric(dpth2$depth_cm)
-
-
 dpth2$species <- as.character(dpth2$species)
 dpth2$density_ramet_per_m2 <- as.numeric(dpth2$density_ramet_per_m2) 
 dpth2$depth_cm <- as.numeric(dpth2$depth_cm) 
+
 
 #3
 
@@ -148,7 +191,7 @@ dpth3c <- dpth3c %>%
          leaf_ht_cm = Leaf.height..cm.,
          leaf_wt_g_per_dry_wt = Leaf.weight..g.dry.weight
           )
-dpth3c$year <- as.numeric(dpth3c$year)
+dpth3c$year <- as.character(dpth3c$year)
 dpth3c$depth_cm <- as.numeric(dpth3c$depth_cm)
 dpth3c$leaf_ht_cm <- as.numeric(dpth3c$leaf_ht_cm)
 
@@ -156,13 +199,14 @@ dpth3c$leaf_ht_cm <- as.numeric(dpth3c$leaf_ht_cm)
 
 dpth3 <- left_join(dpth3a, dpth3b, by = c("location", "season", "year", "species", "depth_cm", "source"))
 dpth3 <- dpth3 %>% 
-  select(1:11, 13:17, 12)
+  select(1:11, 13:17, 12) %>% 
+  mutate(occurrence = ifelse(density_ramet_per_m2 > 0 ,1, 0))
 
 rm(dpth3a, dpth3b)
 
 dpth3$species <- as.character(dpth3$species)
 dpth3$location <- as.character(dpth3$location)
-dpth3$year <- as.numeric(dpth3$yea)
+dpth3$year <- as.character(dpth3$yea)
 dpth3$source <- as.character(dpth3$source)
 
 #4
@@ -180,7 +224,7 @@ dpth4 <- dpth4 %>%
 str(dpth4)
 
 dpth4$location <- as.character(dpth4$location)
-dpth4$year <- as.numeric(dpth4$year)
+dpth4$year <- as.character(dpth4$year)
 dpth4$species <- as.character(dpth4$species)
 dpth4$min_depth_cm <- as.numeric(dpth4$min_depth_cm)
 dpth4$max_depth_cm <- as.numeric(dpth4$max_depth_cm)
@@ -197,7 +241,7 @@ dpth5 <- dpth5 %>%
          water_level_tolerance_m = water.level.tolerance..meters.)
 
 dpth5$location <- as.character(dpth5$location)
-dpth5$year <- as.numeric(dpth5$year)
+dpth5$year <- as.character(dpth5$year)
 dpth5$species <- as.character(dpth5$species)
 dpth5$water_level_tolerance_m <- as.numeric(dpth5$water_level_tolerance_m )
 dpth5$source <- as.character(dpth5$source)
@@ -214,11 +258,13 @@ dpth6 <- dpth6 %>%
          shoot_dry_mass_g = shoot.dry.mass..g.,
          shoot_density_per_m2 = density..shoots.m.2.,
          shoot_density_per_m2_SD = SD......,
-         stand_biomass_g_per_m2 = stand.biomass..g.m.2.)
-dpth6$season <- "summer"
+         stand_biomass_g_per_m2 = stand.biomass..g.m.2.) %>% 
+  mutate(season = "summer",
+         occurrence = ifelse(shoot_ht_cm > 0 , 1, 0))
+
 
 dpth6$location <- as.character(dpth6$location)
-dpth6$year <- as.numeric(dpth6$year)
+dpth6$year <- as.character(dpth6$year)
 dpth6$depth_cm <- as.numeric(dpth6$depth_cm)
 dpth6$species <- as.character(dpth6$species)
 dpth6$shoot_density_per_m2 <- as.numeric(dpth6$shoot_density_per_m2)
@@ -243,24 +289,116 @@ dpth7 <- dpth7 %>%
          spike_width_cm = spike.width..cm., 
          spike_width_SD = SD.4, 
          gap_length_cm = gap.length..cm., 
-         gap_length_SD = SD.5)
+         gap_length_SD = SD.5) %>% 
+  mutate(season = "summer",
+         occurrence = ifelse(shoot_ht_cm > 0 , 1, 0))
 
-dpth7$season <- "summer"
+
 
 str(dpth7)
 
 dpth7$location <- as.character(dpth7$location)
 dpth7$species <- as.character(dpth7$species)
-dpth7$year <- as.numeric(dpth7$year)
+dpth7$year <- as.character(dpth7$year)
 dpth7$depth_cm <- as.numeric(dpth7$depth_cm)
 dpth7$source <- as.character(dpth7$source)
 
 
-depth <- bind_rows(dat, dpth1, dpth2, dpth3, dpth4, dpth5, dpth6, dpth7)
+#create final depth file
+
+depth <- bind_rows(dat, dat1, dpth1, dpth2, dpth3, dpth4, dpth5, dpth6, dpth7)
+depth$species <- tolower(depth$species)
+depth$species <- trimws(depth$species)
+depth$species[depth$species == "typha glauca godr."] <- "typha glauca"
+
+save(depth, file = "typha_depth.RData")
 
 
+ref <- depth %>% 
+  filter(!is.na(occurrence))
+unique(ref$source)
 
 ######## Velocity -------------------------------------------------
+
+
+#1
+
+#make data from typha occurrence based on fig 3-4 and max vel reported on page 38
+set.seed(85436)
+vel <- rnorm(n=20, mean = 0.06, sd = 0.05)
+hist(vel)
+pres <- ifelse(vel >= 0.107 | vel <= 0 , 0, 1)
+
+vel1 <- data.frame(
+  "vel_m_s" = vel,
+  "occurrence" = pres,
+  "season" = "summer",
+  "location" = "Arizona",
+  "species" = "Typha domingensis",
+  "year" = "2003",
+  "source" = "Jones, Charles E. 2003. Predicting Cattail responses to re-watering of a travertine stream: Decommissioning the Fossil Springs Dam. Masters Thesis. Northern Arizona University"
+)
+
+#make data for paired patches with no typha based on fig 3-4 and page 45 range
+set.seed(854776)
+vel <- rnorm(n=20, mean = 0.82, sd = 0.4)
+hist(vel)
+pres <- 0
+
+vel2 <- data.frame(
+  "vel_m_s" = vel,
+  "occurrence" = pres,
+  "season" = "summer",
+  "location" = "Arizona",
+  "species" = "Typha domingensis",
+  "year" = "2002",
+  "source" = "Jones, Charles E. 2003. Predicting Cattail responses to re-watering of a travertine stream: Decommissioning the Fossil Springs Dam. Masters Thesis. Northern Arizona University"
+)
+
+vel <- rbind(vel1, vel2)
+
+str(vel)
+vel$season <- as.character(vel$season)
+vel$location <- as.character(vel$location)
+vel$species <- as.character(vel$species)
+vel$year <- as.character(vel$year)
+vel$source <- as.character(vel$source)
+
+
+
+#2
+vel1 <- read.csv("Typha_Velocity_Data Collection/Asaeda2005.csv")
+vel1 <- vel1 %>% 
+  select(2,3, 6, 8:10, 12, 14, 16, 18) %>% 
+  rename(shoot_density_per_m2 = shoot_density_num_per_m2) %>% 
+  filter(!is.na(year)) %>% 
+  mutate(season = "summer",
+         vel_m_s = 0.01*(velocity_cm_s),
+         occurrence = ifelse(patchArea_m2 > 0 , 1, 0))
+
+
+str(vel1)
+
+vel1$location <- as.character(vel1$location)
+vel1$species <- as.character(vel1$species)
+vel1$year <- as.character(vel1$year)
+vel1$source <- as.character(vel1$source)
+vel1$Shoots_num <- as.numeric(vel1$Shoots_num)
+vel1$Mean_shoot_diameter_mm_long <- as.numeric(vel1$Mean_shoot_diameter_mm_long)
+
+
+#make final velocity data
+
+velocity <- bind_rows(vel, vel1) %>% 
+  select(location, year, season, species, occurrence, 
+         vel_m_s, velocity_cm_s, 
+         patchArea_m2,  Shoots_num, shoot_density_per_m2, 
+         Mean_shoot_diameter_mm_long, Mean_shoot_diameter_mm_short, source)
+
+
+save(velocity, file = "typha_velocity.RData")
+
+
 
 
 ######## Temperature -------------------------------------------------

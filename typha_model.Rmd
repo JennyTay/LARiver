@@ -1,0 +1,44 @@
+---
+title: "Typha"
+author: "Jenny Rogers"
+date: "May 6, 2020"
+output: html_document
+---
+
+
+Plots for velocity
+```{r}
+load("typha_velocity.RData")
+
+
+ggplot(data = velocity, mapping = aes(x = vel_m_s, y = occurrence))+
+  geom_point()+
+  labs(x = "Velocity (m/s)", y = "Occurrence")+
+  geom_smooth(method = "glm", method.args = list(family = "binomial"))+
+  theme(text = element_text(size=30), panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(), panel.border = element_rect(colour = "black", fill=NA, size=.5))
+
+
+```
+
+plots for depth
+
+```{r}
+
+ggplot(data = depth, mapping = aes(x = depth_cm, y = occurrence))+
+  geom_point()+
+  labs(x = "Depth (cm)", y = "Occurrence")+
+  geom_smooth(method = "lm", formula = y ~ x + I(x^2))+
+  theme(text = element_text(size=30), panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(), panel.border = element_rect(colour = "black", fill=NA, size=.5))
+
+
+ggplot(data = depth, mapping = aes(x = depth_cm, y = density_ramet_per_m2, color = species))+
+  geom_point()+
+  labs(x = "Depth (cm)", y = "Ramet / m2")+
+  geom_smooth(method = "lm", formula = y ~ x + I(x^2))+
+  theme(text = element_text(size=25), panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(), panel.border = element_rect(colour = "black", fill=NA, size=.5))+
+  ylim(c(-10,50))
+
+```
