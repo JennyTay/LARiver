@@ -404,5 +404,48 @@ save(velocity, file = "typha_velocity.RData")
 ######## Temperature -------------------------------------------------
 
 
-######## Shear Stress -------------------------------------------------
+#prepping data for temperature impacts on Typha
+
+tmp1 <- read.csv("Typha_Temperature_Data_Collection/Lombardi_etal_1997.csv")
+head(tmp1)
+tmp1 <- tmp1 %>% 
+  select(2, 3, 5, 8:11, 13) %>% 
+  rename(location = location..country.)
+names(tmp1) <- tolower(names(tmp1))
+
+
+tmp2 <- read.csv("Typha_Temperature_Data_Collection/Morinaga1926.csv")
+head(tmp2)
+tmp2 <- tmp2 %>% 
+  select(1, 2, 4:7, 10) %>% 
+  mutate(temperature_range_C = high_temperature_C - low_temperature_C,
+         temperature_type = "variable")
+names(tmp2) <- tolower(names(tmp2))
+
+tmp3 <- read.csv("Typha_Temperature_Data_Collection/Sifton_2011.csv")
+tmp3 <- tmp3 %>% 
+  select(2, 4:10, 12) %>% 
+  mutate(low_temperature_C = temperature_C,
+         high_temperature_C = temperature_C) %>% 
+  select(-temperature_C)
+names(tmp3) <- tolower(names(tmp3))
+
+tmp4 <- read.csv("Typha_Temperature_Data_Collection/Bonnewell_1983.csv")
+names(tmp4)
+tmp4 <- tmp4 %>% 
+  rename(location = location_where_seed_is_from,
+         exp_type = location_of_experiment) %>% 
+  mutate(low_temperature_C = temperature_C,
+         high_temperature_C = temperature_C,
+         temperature_range_c  = high_temperature_C - low_temperature_C,
+         temperature_type = "constant") %>% 
+  select(-temperature_C)
+names(tmp4) <- tolower(names(tmp4))
+
+
+temp <- bind_rows(tmp1, tmp2, tmp3, tmp4)
+temp <- temp %>% 
+  mutate(temp_midRng_c = (low_temperature_c+high_temperature_c) / 2)
+
+plot(temp$temperature_range_c, temp$germination_perc)
 
