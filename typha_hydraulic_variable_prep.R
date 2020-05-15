@@ -449,3 +449,5 @@ temp <- temp %>%
 
 plot(temp$temperature_range_c, temp$germination_perc)
 
+summary(lm(germination_perc ~ high_temperature_c + temperature_range_c, data = temp))
+
