@@ -1,0 +1,10 @@
+---
+title: "Steelhead"
+author: "Jenny Rogers"
+date: "May 18, 2020"
+output: html_document
+---
+
+Steelhead conceptual model
+Migration requires an appropriate depth, velocity and temperature
+life stages to migrate include smolts (going to the ocean to mature) and kelts (returning to spawn)

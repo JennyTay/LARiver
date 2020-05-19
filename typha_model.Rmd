@@ -8,7 +8,7 @@ output: html_document
 
 Plots for velocity
 ```{r}
-load("typha_velocity.RData")
+load("typha_velocity.RData")  
 
 
 ggplot(data = velocity, mapping = aes(x = vel_m_s, y = occurrence))+
