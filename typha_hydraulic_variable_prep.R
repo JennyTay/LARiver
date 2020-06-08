@@ -303,6 +303,10 @@ dpth7$year <- as.character(dpth7$year)
 dpth7$depth_cm <- as.numeric(dpth7$depth_cm)
 dpth7$source <- as.character(dpth7$source)
 
+#have this additional source, but not sure how to incorportate them because it doesnt have depth, just soil moisutre...
+dpth8 <- read.csv("Typha_Depth_Data_Collection/TerHeerdtetal_2017_2.csv")
+dpth9 <- read.csv("Typha_Depth_Data_Collection/TerHeerdtetal_2017_3.csv")
+
 
 #create final depth file
 
@@ -441,6 +445,11 @@ tmp4 <- tmp4 %>%
          temperature_type = "constant") %>% 
   select(-temperature_C)
 names(tmp4) <- tolower(names(tmp4))
+
+
+
+tmp5 <- read.csv("Typha_Temperature_Data_Collection/TerHeerdtetal_2017_1.csv")
+head(tmp5)
 
 
 temp <- bind_rows(tmp1, tmp2, tmp3, tmp4)
