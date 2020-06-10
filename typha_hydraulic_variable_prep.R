@@ -316,6 +316,7 @@ depth$species <- trimws(depth$species)
 depth$species[depth$species == "typha glauca godr."] <- "typha glauca"
 
 save(depth, file = "typha_depth.RData")
+load("typha_depth.RData")
 
 
 ref <- depth %>% 
@@ -448,15 +449,66 @@ names(tmp4) <- tolower(names(tmp4))
 
 
 
-tmp5 <- read.csv("Typha_Temperature_Data_Collection/TerHeerdtetal_2017_1.csv")
-head(tmp5)
+tmp5 <- read.csv("Typha_Temperature_Data_Collection/TerHeerdtetal_2017_1.csv", nrows = 245)
+#in this paper , they reported seeedling emergence, not germination, but we will consider this germination so it can be used with the other ppaers.
+str(tmp5)
+tmp5 <- tmp5 %>% 
+  rename(low_temperature_C = minimum_temperature_C,
+         high_temperature_C = maximum_temperature_C,
+         germination_perc = seedling_emergence_perc,
+         condition = moisture) %>% 
+  mutate(temperature_type = "variable",
+         temperature_range_C = high_temperature_C - low_temperature_C)
+
+names(tmp5) <- tolower(names(tmp5))
 
 
-temp <- bind_rows(tmp1, tmp2, tmp3, tmp4)
+
+tmp6 <- read.csv("Typha_Temperature_Data_Collection/TerHeerdtetal_2017_2.csv")
+head(tmp6)
+tmp6$low_temperature_C <- ifelse(tmp6$temperature == "cold", 3,
+                                 ifelse(tmp6$temperature == "cool", 10,
+                                 ifelse(tmp6$temperature == "intermediate", 15,
+                                        ifelse(tmp6$temperature == "warm", 20, 30))))
+tmp6$high_temperature_C <- ifelse(tmp6$temperature == "cold", 10,
+                                 ifelse(tmp6$temperature == "cool", 20,
+                                        ifelse(tmp6$temperature == "intermediate", 25,
+                                               ifelse(tmp6$temperature == "warm", 30, 40))))
+tmp6 <- tmp6 %>% 
+  mutate(temperature_type = "variable",
+         temperature_range_C = high_temperature_C - low_temperature_C) %>% 
+  select(-temperature) %>% 
+  rename(germination_perc = maximum_emergence_capacity_Emax,
+         condition = moisture)
+
+names(tmp6) <- tolower(names(tmp6))
+
+
+tmp7 <- read.csv("Typha_Temperature_Data_Collection/TerHeerdtetal_2017_3.csv")
+head(tmp7)
+tmp7$low_temperature_C <- ifelse(tmp7$temperature == "cold", 3,
+                                 ifelse(tmp7$temperature == "cool", 10,
+                                        ifelse(tmp7$temperature == "intermediate", 15,
+                                               ifelse(tmp7$temperature == "warm", 20, 30))))
+tmp7$high_temperature_C <- ifelse(tmp7$temperature == "cold", 10,
+                                  ifelse(tmp7$temperature == "cool", 20,
+                                         ifelse(tmp7$temperature == "intermediate", 25,
+                                                ifelse(tmp7$temperature == "warm", 30, 40))))
+tmp7 <- tmp7 %>% 
+  mutate(temperature_type = "variable",
+         temperature_range_C = high_temperature_C - low_temperature_C) %>% 
+  select(-temperature)  %>% 
+  rename(seedling_survial_perc = seedling_emergence_and_survival_perc,
+         condition = moisture)
+
+names(tmp7) <- tolower(names(tmp7))
+
+
+
+temp <- bind_rows(tmp1, tmp2, tmp3, tmp4, tmp5, tmp6, tmp7)
+temp$condition <- trimws(temp$condition)
 temp <- temp %>% 
   mutate(temp_midRng_c = (low_temperature_c+high_temperature_c) / 2)
 
-plot(temp$temperature_range_c, temp$germination_perc)
-
-summary(lm(germination_perc ~ high_temperature_c + temperature_range_c, data = temp))
+save(temp, file = "typha_temp.RData")
 
