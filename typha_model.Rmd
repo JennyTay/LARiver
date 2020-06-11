@@ -57,12 +57,15 @@ Plots for temperature
 
 load("typha_temp.RData")
 
-ggplot(data = temp, aes(x = temperature_range_c, y = germination_perc))+
-  geom_point(alpha = 0.2, size = 3)
+ggplot(data = temp, aes(x = temp_midRng_c, y = germination_perc))+
+  geom_jitter(alpha = 0.2, size = 3)+
+  geom_smooth()
 
+ggplot(data = temp, aes(x = low_temperature_c, y = germination_perc))+
+  geom_jitter(alpha = 0.2, size = 3)+
+  geom_smooth()
 
-
-summary(lm(germination_perc ~ high_temperature_c + temperature_range_c, data = temp))
+summary(lm(germination_perc ~ temp_midRng_c + low_temperature_c, data = temp))
 
 
 

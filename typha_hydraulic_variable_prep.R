@@ -507,6 +507,7 @@ names(tmp7) <- tolower(names(tmp7))
 
 temp <- bind_rows(tmp1, tmp2, tmp3, tmp4, tmp5, tmp6, tmp7)
 temp$condition <- trimws(temp$condition)
+temp$species <- tolower(temp$species)
 temp <- temp %>% 
   mutate(temp_midRng_c = (low_temperature_c+high_temperature_c) / 2)
 
