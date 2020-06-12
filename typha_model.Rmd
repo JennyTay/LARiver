@@ -5,6 +5,13 @@ date: "May 6, 2020"
 output: html_document
 ---
 
+```{r}
+library(tidyverse)
+
+
+```
+
+
 
 Plots for velocity
 ```{r}
@@ -18,6 +25,8 @@ ggplot(data = velocity, mapping = aes(x = vel_m_s, y = occurrence))+
   theme(text = element_text(size=20), panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(), panel.border = element_rect(colour = "black", fill=NA, size=.5))
 
+
+unique(velocity$source[!is.na(velocity$occurrence)])
 
 ```
 
@@ -34,20 +43,41 @@ ggplot(data = depth, mapping = aes(x = depth_cm, y = occurrence))+
   theme(text = element_text(size=20), panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(), panel.border = element_rect(colour = "black", fill=NA, size=.5))
 
-
+#germination percent
 ggplot(data = depth[!is.na(depth$germination_perc),], mapping = aes(x = depth_cm, y = germination_perc, color = species))+
   geom_point()+
-  labs(x = "Depth (cm)", y = "Germination Percent")+
+  labs(x = "Depth (cm)", y = "Germination (%)")+
   geom_smooth(method = "lm", formula = y ~ x + I(x^2))+
   theme(text = element_text(size=20), panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(), panel.border = element_rect(colour = "black", fill=NA, size=.5))
 
+ggplot(data = depth[!is.na(depth$germination_perc),], mapping = aes(x = depth_cm, y = germination_perc))+
+  geom_point()+
+  labs(x = "Depth (cm)", y = "Germination (%)")+
+  geom_smooth(method = "lm", formula = y ~ x + I(x^2))+
+  theme(text = element_text(size=20), panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(), panel.border = element_rect(colour = "black", fill=NA, size=.5))
+
+
+#seedling survial
 ggplot(data = depth[!is.na(depth$seedling_survial_perc),], mapping = aes(x = depth_cm, y = seedling_survial_perc, color = species))+
   geom_point()+
   labs(x = "Depth (cm)", y = "Seedling survival (%)")+
   geom_smooth(method = "lm", formula = y ~ x + I(x^2))+
   theme(text = element_text(size=20), panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
         panel.background = element_blank(), panel.border = element_rect(colour = "black", fill=NA, size=.5))
+
+ggplot(data = depth[!is.na(depth$seedling_survial_perc),], mapping = aes(x = depth_cm, y = seedling_survial_perc))+
+  geom_point()+
+  labs(x = "Depth (cm)", y = "Seedling survival (%)")+
+  geom_smooth(method = "lm", formula = y ~ x + I(x^2))+
+  theme(text = element_text(size=20), panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(), panel.border = element_rect(colour = "black", fill=NA, size=.5))
+
+
+unique(depth$source[!is.na(depth$occurrence)])
+unique(depth$source[!is.na(depth$germination_perc)])
+unique(depth$source[!is.na(depth$seedling_survial_perc)])
 
 ```
 
@@ -59,14 +89,28 @@ load("typha_temp.RData")
 
 ggplot(data = temp, aes(x = temp_midRng_c, y = germination_perc))+
   geom_jitter(alpha = 0.2, size = 3)+
-  geom_smooth()
+  geom_smooth(method = "lm", formula = y ~ x + I(x^2))+
+  theme(text = element_text(size=20), panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(), panel.border = element_rect(colour = "black", fill=NA, size=.5))+
+  labs(x = "Temperature Mid-Range (C)", y = "Germination (%)")
 
-ggplot(data = temp, aes(x = low_temperature_c, y = germination_perc))+
+
+ggplot(data = temp, aes(x = high_temperature_c, y = germination_perc))+
   geom_jitter(alpha = 0.2, size = 3)+
-  geom_smooth()
+  geom_smooth(method = "lm", formula = y ~ x + I(x^2))+
+  theme(text = element_text(size=20), panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(), panel.border = element_rect(colour = "black", fill=NA, size=.5))+
+  labs(x = "High Temperature (C)", y = "Germination (%)")
 
-summary(lm(germination_perc ~ temp_midRng_c + low_temperature_c, data = temp))
+summary(lm(germination_perc ~ temperature_range_c + high_temperature_c, data = temp))
 
+ggplot(data = temp, aes(x = temperature_range_c, y = germination_perc))+
+  geom_jitter(alpha = 0.2, size = 3)+
+  geom_smooth(method = "lm", formula = y ~ x + I(x^2))+
+  theme(text = element_text(size=20), panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(), panel.border = element_rect(colour = "black", fill=NA, size=.5))+
+  labs(x = "Temperature Range (C)", y = "Germination (%)")
 
+unique(temp$source[!is.na(temp$germination_perc)])
 
 ```
