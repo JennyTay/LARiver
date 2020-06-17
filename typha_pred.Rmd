@@ -1,0 +1,105 @@
+---
+title: "PredictiveModel"
+author: "Jenny Rogers"
+date: "June 15, 2020"
+output: html_document
+---
+
+
+```{r}
+
+library(tidyverse)
+library(lubridate)
+
+```
+
+
+
+this is a script to predict the probability of occurrence of different life stages of typha due to changing hydraulics in the Los Angeles River. The variables that we are using to measure habitat suitability inclue depth (germination/seedling survial, adult patches), velocity (adult patches), and temperature (germination). 
+
+In this first chunk of code, we read in and tidy the projected hydraulic data from HEC-RAS simulations that model hydraulics under different waste water reuse. 
+
+
+```{r}
+
+
+hydlics <- read.csv("hecras.csv")
+hydlics <- hydlics %>%
+  select(1: 3, contains("Depth"), contains("Vel")) %>% 
+  mutate(Vel_LOB = Avg..Vel...ft.s..LOB * 0.3048, #convert f/s to m/s
+         Depth_LOB = Hydr..Depth..ft..LOB * 30.48, #convert ft to cm
+         Vel_MC  = Avg..Vel...ft.s..MC * 0.3048, 
+         Depth_MC  = Hydr..Depth..ft..MC * 30.48,
+         Vel_ROB  = Avg..Vel...ft.s..ROB * 0.3048, 
+         Depth_ROB  = Hydr..Depth..ft..ROB * 30.48) %>% 
+  select(-(4:9)) %>% 
+  mutate(DateTime = mdy_hm(DateTime),
+         year = year(DateTime),
+         month = month(DateTime),
+         day = day(DateTime)) %>% 
+  pivot_longer(cols = 4:9, names_to = "variable", values_to = "value") %>% 
+  separate(variable, into = c("variable", "bank"), sep = "_") %>% 
+  pivot_wider(names_from = variable, values_from = value)
+
+
+
+```
+
+
+In this second chunk of code, we read in the five models used to predict different outcomes of habitat suitabilty 
+
+```{r}
+
+#velocity model for typha patches
+
+#logistic regression model, so the prediction will be log odds and will need to be transformed to be probablity of occurrence
+load("vel_ptch_mdl.rda")
+
+
+
+
+#temperature models for typha germination
+
+#linear model with a quadratic term for percent germination
+load("tmp_germ_mdl.rda")
+
+
+
+
+#depth models for typha germination, seedling survival, and patches
+
+#linear model with a quadatic term for germinaion percent
+load("dep_germ_mdl.rda")
+
+#linear model with a quadratic term for seedling survial percent
+load("dep_sdlng_mdl.rda")
+
+#linear model with a quadratic term for occurrence
+load("dep_ptch_mdl.rda")
+
+
+```
+
+
+in this chunk of code, we apply the models to the projected stream hydraulics
+```{r}
+
+#adult
+hydlics$pred_ptch_vel <- predict(vel_ptch_mdl, newdata = hydlics$Vel)
+
+
+
+hydlics$pred_ptch_dep
+
+
+
+#germination
+hydlics$pred_germ_dep
+
+
+
+#seedling
+hydlics$pred_sdlng_dep
+
+
+```
