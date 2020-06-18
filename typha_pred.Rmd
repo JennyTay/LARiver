@@ -18,11 +18,12 @@ library(lubridate)
 this is a script to predict the probability of occurrence of different life stages of typha due to changing hydraulics in the Los Angeles River. The variables that we are using to measure habitat suitability inclue depth (germination/seedling survial, adult patches), velocity (adult patches), and temperature (germination). 
 
 In this first chunk of code, we read in and tidy the projected hydraulic data from HEC-RAS simulations that model hydraulics under different waste water reuse. 
+We then read in and tidy the temperature data
 
 
 ```{r}
 
-
+#this is example data for node F57C
 hydlics <- read.csv("hecras.csv")
 hydlics <- hydlics %>%
   select(1: 3, contains("Depth"), contains("Vel")) %>% 
@@ -39,9 +40,26 @@ hydlics <- hydlics %>%
          day = day(DateTime)) %>% 
   pivot_longer(cols = 4:9, names_to = "variable", values_to = "value") %>% 
   separate(variable, into = c("variable", "bank"), sep = "_") %>% 
-  pivot_wider(names_from = variable, values_from = value)
+  pivot_wider(names_from = variable, values_from = value) %>% 
+  rename(vel_m_s = Vel,
+         depth_cm = Depth) %>% 
+  mutate(species = "typha latifolia") #add in a species name to the germination model
 
 
+#this is example temperature data from the observed Temp data for compton creek
+temperature <- read.csv("temperature_data.txt")
+temperature <- temperature %>% 
+  separate("yyyymmdd.Hr.Min.Sec.Temp", into = c("date", "time", "temperature"), sep = ",") %>% 
+  unite(col = date, c(date, time), sep = ":") %>% 
+  mutate(DateTime = ymd_hms(date),
+         year = year(DateTime),
+         month = month(DateTime, label = TRUE),
+         day = day(DateTime),
+         temperature = as.numeric(temperature)) %>% 
+  select(-date) %>% 
+  group_by(month, day) %>% 
+  summarise(high_temperature_c = max(temperature),
+            temperature_range_c = max(temperature)- min(temperature))
 
 ```
 
@@ -54,7 +72,7 @@ In this second chunk of code, we read in the five models used to predict differe
 
 #logistic regression model, so the prediction will be log odds and will need to be transformed to be probablity of occurrence
 load("vel_ptch_mdl.rda")
-
+summary(vel_ptch_mdl)
 
 
 
@@ -62,7 +80,7 @@ load("vel_ptch_mdl.rda")
 
 #linear model with a quadratic term for percent germination
 load("tmp_germ_mdl.rda")
-
+summary(tmp_germ_mdl)
 
 
 
@@ -70,12 +88,15 @@ load("tmp_germ_mdl.rda")
 
 #linear model with a quadatic term for germinaion percent
 load("dep_germ_mdl.rda")
+summary(dep_germ_mdl)
 
 #linear model with a quadratic term for seedling survial percent
 load("dep_sdlng_mdl.rda")
+summary(dep_sdlng_mdl)
 
 #linear model with a quadratic term for occurrence
 load("dep_ptch_mdl.rda")
+summary(dep_ptch_mdl)
 
 
 ```
@@ -84,22 +105,154 @@ load("dep_ptch_mdl.rda")
 in this chunk of code, we apply the models to the projected stream hydraulics
 ```{r}
 
-#adult
-hydlics$pred_ptch_vel <- predict(vel_ptch_mdl, newdata = hydlics$Vel)
+#adult probability of occurrence velocity
+hydlics$pred_ptch_vel <- predict(vel_ptch_mdl, newdata = hydlics) #predict with new data
+hydlics$prob_ptch_vel <- exp(hydlics$pred_ptch_vel)/(1+exp(hydlics$pred_ptch_vel)) #convert log odds to prob
+hydlics <- hydlics %>% select(-pred_ptch_vel) #remove the log odds column
+
+
+#adult occurrence depth
+hydlics$pred_ptch_dep <- predict(dep_ptch_mdl, newdata = hydlics) #occurrence
+
+
+#germination depth
+hydlics$pred_germ_dep <- predict(dep_germ_mdl, newdata = hydlics) #germination percent
+
+#germination temperature
+temperature$pred_germ_tmp <- predict(tmp_germ_mdl, newdata = temperature)
+
+
+#seedling depth
+hydlics$pred_sdlng_dep <- predict(dep_sdlng_mdl, newdata = hydlics) #seedling survival percent
+
+
+```
+
+
+In this chunk of code well plot
+```{r}
+
+#physicla metrics
+ggplot(data = hydlics, mapping = aes(x = DateTime, y = vel_m_s))+
+  geom_line()+
+  facet_wrap(vars(bank))+
+  labs(x = "Date", y = "Node F57C Velocity (m/s)")
+
+ggplot(data = hydlics, mapping = aes(x = DateTime, y = depth_cm))+
+  geom_line()+
+  facet_wrap(vars(bank))+
+  labs(x = "Date", y = "Node F57C Depth (cm)")
+
+ggplot(data = temperature, mapping = aes(x = day, y = high_temperature_c))+
+  geom_line()+
+  facet_wrap(vars(month))+
+  labs(x = "Day", y = "Max Temperature (C)")
+
+ggplot(data = temperature, mapping = aes(x = day, y = temperature_range_c))+
+  geom_line()+
+  facet_wrap(vars(month))+
+  labs(x = "Day", y = "Temperature Range (C)")
 
 
 
-hydlics$pred_ptch_dep
+
+
+#predicted occurrence 
+ggplot(data = hydlics, mapping = aes(x = DateTime, y = prob_ptch_vel))+
+  geom_line()+
+  facet_wrap(vars(bank))+
+  labs(x = "Date", y = "Prob of Typha Occurrence due to Velocity")
+
+ggplot(data = hydlics, mapping = aes(x = DateTime, y = pred_ptch_dep))+
+  geom_line()+
+  facet_wrap(vars(bank))+
+  labs(x = "Date", y = "Prob of Typha Occurrence due to Depth")
+
+ggplot(data = hydlics, mapping = aes(x = DateTime, y = pred_germ_dep))+
+  geom_line()+
+  facet_wrap(vars(bank))+
+  labs(x = "Date", y = "Germination (%)")
+
+ggplot(data = temperature, mapping = aes(x = day, y = pred_germ_tmp))+
+  geom_line()+
+  facet_wrap(vars(month))+
+  labs(x = "Day", y = "Germination (%)")
+
+ggplot(data = hydlics, mapping = aes(x = DateTime, y = pred_sdlng_dep))+
+  geom_line()+
+  facet_wrap(vars(bank))+
+  labs(x = "Date", y = "Seedling Survival (%)")
 
 
 
-#germination
-hydlics$pred_germ_dep
+
+
+```
 
 
 
-#seedling
-hydlics$pred_sdlng_dep
+In this section, we experiment with ways to 
+```{r}
 
+synthesis <- hydlics %>% 
+  mutate(adult = ifelse(prob_ptch_vel <= pred_ptch_dep, prob_ptch_vel, pred_ptch_dep)) %>% 
+  group_by(bank, year, month) %>% 
+  summarise(min_ptch = min(adult),
+            average_ptch = mean(adult),
+            min_germ = min(pred_germ_dep),
+            average_germ = mean(pred_germ_dep)) %>% 
+  ungroup() 
+
+ggplot(data = synthesis, mapping = aes(x = month, y = min_ptch))+
+  geom_line()+
+  labs(x = "Month", y = "Min Probability") +
+  facet_grid(rows = vars(as.character(year)), cols = vars(as.character(bank)))
+
+
+
+a <- ggplot(data = synthesis, mapping = aes(x = month, y = average_ptch))+
+  geom_line()+
+  labs(x = "Month", y = "Average Probability") +
+  facet_grid(rows = vars(as.character(year)), cols = vars(as.character(bank)))+
+  theme(text = element_text(size=40), panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(), panel.border = element_rect(colour = "black", fill=NA, size=.5))
+ggsave(a, filename = "average.tiff", width = 20, height = 25, dpi = 300, compression = "lzw")
+
+
+
+Germination <- synthesis %>% 
+  filter(month %in% c(5:8))
+
+a <- ggplot(data = Germination, mapping = aes(x = month, y = average_germ))+
+  geom_line()+
+  labs(x = "Month", y = "Germination (%)") +
+  facet_grid(rows = vars(as.character(year)), cols = vars(as.character(bank)))+
+  theme(text = element_text(size=40), panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        panel.background = element_blank(), panel.border = element_rect(colour = "black", fill=NA, size=.5))
+ggsave(a, filename = "average.tiff", width = 20, height = 25, dpi = 300, compression = "lzw")
+
+
+
+
+
+
+most_consecutive_val = function(vector, val = 1) { 
+  with(rle(vector), max(lengths[values == val]))
+}
+
+grm <- hydlics  %>% 
+    group_by(bank, year) %>% 
+    summarize(germ_depth_suitability = most_consecutive_val(vector=abs(diff(which(pred_germ_dep >= 35))==1)))
+write.csv(grm, file = "suitability.csv")
+
+suitability <- 
+  data.frame(
+    "year" = grm$year, 
+    "bank" = grm$bank,
+    "lifestage" = "germination", 
+    "variable" = "depth", 
+    "suitability" = ifelse(grm$germ_depth_suitability >= 336, "suitable", "unsuitable")) 
+suitability <- suitability %>% unique()
+write.csv(suitability, file = "suitability.csv")
 
 ```
